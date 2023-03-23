@@ -6,7 +6,7 @@ from pathlib import Path
 
 calibration_df = pd.read_csv('')
 
-present = True
+
 
 df = pd.read_csv('data_5hprobe.csv')
 column_headers = df.columns
