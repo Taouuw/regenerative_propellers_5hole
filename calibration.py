@@ -1,6 +1,8 @@
 import math
+import torch
 import pandas as pd
 import numpy as np
+import scipy
 from mpl_toolkits import mplot3d
 import matplotlib.pyplot as plt
 from pathlib import Path
@@ -83,31 +85,63 @@ class general_regression_model():
         my_regressions_model = cls([f1,f2,f3])
         return my_regressions_model
 
+    @classmethod
+    def two_dim_more(cls):
+        def f0(x : np.ndarray):
+            return 1
+        def f1(x : np.ndarray):
+            return x[0]
+        def f2(x : np.ndarray):
+            return x[1]
+        def f3(x : np.ndarray):
+            return x[0] * x[1]
+        def f4(x : np.ndarray):
+            return x[0]*x[0]
+        def f5(x : np.ndarray):
+            return x[1] * x[1]
+
+        my_regressions_model = cls([f1,f2,f3])
+        return my_regressions_model
 
 #Processing calibration data and creating array with it
 calibration_df = pd.read_csv('calibration_data.tsv', sep='\t')
 calibration_headers = calibration_df.columns
 
 [cp_alphas, cp_betas, cp_ts, cp_ss, alphas, betas] = [calibration_df[header].to_numpy() for header in calibration_headers]
+#alpha = atan(tan(a)/cos(b))
 alphas = np.array([math.atan(math.tan(math.radians(alphas[i]))/math.cos(math.radians(betas[i]))) for i in range(len(alphas))])
-
-
 
 """How do we find CP_5 and v_inf from the calibration dataset? How do we use/what are CP_t and CP_s?"""
 cp_centers = np.zeros(len(alphas))
 v_inf = np.zeros(len(alphas))
 #creating whole calibration array
 calibration_array = np.hstack([collumn_data.reshape(-1,1) for collumn_data in [cp_alphas, cp_betas, cp_centers, alphas, np.radians(betas), v_inf]])
-#print(calibration_array)
-#separating regression xs and ys
+print(calibration_array)
+#seperating regression xs and ys
 xs = calibration_array[:,:3]    #cp_alpha, cp_beta, cp_center
 ys = calibration_array[:,3:]    #alphas, betas, v_inf
 
-alpha_model = general_regression_model.two_dim()
-beta_model = general_regression_model.two_dim()
+#STARTING REGRESSION
+alpha_model = general_regression_model.two_dim_more()
+beta_model = general_regression_model.two_dim_more()
 
 alpha_model.fit(xs, ys[:,0])
 beta_model.fit(xs, ys[:,1])
+print(alpha_model.coefficients)
+print(beta_model.coefficients)
+
+
+#TESTING
+alphas_true = ys[:,0]
+alphas_pred = [alpha_model(x_vec) for x_vec in xs]
+
+plt.scatter(xs[:,0], alphas_true, label="true")
+plt.scatter(xs[:,0], alphas_pred, label="predict")
+plt.xlabel("cp_alpha")
+plt.ylabel("alpha")
+plt.legend()
+plt.savefig("plot2.png")
+plt.show()
 
 """
 EXAMPLE CODE
