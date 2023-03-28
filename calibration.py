@@ -131,7 +131,6 @@ cp_centers = np.zeros(len(alphas))
 v_inf = np.zeros(len(alphas))
 #creating whole calibration array
 calibration_array = np.hstack([collumn_data.reshape(-1,1) for collumn_data in [cp_alphas, cp_betas, cp_centers, alphas, np.radians(betas), v_inf]])
-print(calibration_array)
 #seperating regression xs and ys
 xs = calibration_array[:,:3]    #cp_alpha, cp_beta, cp_center
 ys = calibration_array[:,3:]    #alphas, betas, v_inf
@@ -155,8 +154,6 @@ beta_model = general_regression_model([f0, f1, f2])
 
 alpha_model.fit(xs, ys[:,0])
 beta_model.fit(xs, ys[:,1])
-print(alpha_model.coefficients)
-print(beta_model.coefficients)
 
 
 #TESTING
