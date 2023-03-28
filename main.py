@@ -3,61 +3,19 @@ import numpy as np
 from mpl_toolkits import mplot3d
 import matplotlib.pyplot as plt
 from pathlib import Path
+import calibration
 
 #calibration_df = pd.read_csv('')
 
 df = pd.read_csv('data_5hprobe.csv')
 column_headers = df.columns
-print(column_headers[0])
+#print(column_headers[0])
 
 data_array = df.to_numpy()
 
 # separate data into regen and propulsive stage and into the 3 different conditions
 data_prop_stage = np.array_split(data_array[:1050,:],3)
 data_regen_stage = np.array_split(data_array[1050:,:],3)
-
-
-
-ps = data_array[:351,12]
-xs = data_array[:351,15]
-ys = data_array[:351,16]
-
-y_len = 0
-x_len = 0
-for i in range(len(xs)):
-    if xs[i] != xs[i+1]:
-        x_len += 1
-        y_len = i+1
-        break
-
-for i in range(len(xs)-1):
-    if xs[i] != xs[i+1]:
-        x_len += 1
-
-#print(x_len, y_len)
-
-n=0
-data_matrix = np.empty((x_len, y_len, 3))
-data_matrix[:,:,:] = np.nan
-for i, row in enumerate(data_matrix):
-    row_length = 0
-    for j, cell in enumerate(row):
-        cell[0] = xs[n]
-        cell[1] = ys[n]
-        cell[2] = ps[n]
-
-        n += 1
-        row_length+=1
-        if n >= len(xs):
-            break
-        elif (xs[n] != xs[n-1]):
-            #print(f'DIFFERENCE: {(xs[n-1], xs[n])}')
-            #print(f'count: {n}, rowlength = {row_length}, {(i,j)}')
-            assert row[0,0] == xs[n-1] and row_length<=35
-
-            break
-
-#print(data_matrix[:,:25,0])
 
 class cp_results:
     def __init__(self, cp_theta, cp_phi, cp_center, cp_ave):
@@ -90,11 +48,32 @@ class cp_results:
         my_results = cls(cp_theta, cp_phi, cp_center, cp_ave)
         return my_results
 
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-ax.plot_surface(data_matrix[:,:,0], data_matrix[:,:,1], data_matrix[:,:,2], alpha = 1) #, lw=0.5, rstride=8, cstride=8, alpha=0.3)
+p1 = data_prop_stage[0][:,10]
+p2 = data_prop_stage[0][:,11]
+p3 = data_prop_stage[0][:,12]
+p4 = data_prop_stage[0][:,13]
+p5 = data_prop_stage[0][:,14]
 
-ax.set(xlabel='X position', ylabel='Y position', zlabel='Pressure')
+pavg = np.array([cp_results.get_ave(pressures) for pressures in np.array([p1,p2,p3,p4,p5]).T])
+
+cp_alphas = cp_results.get_cp_theta(p1, p3, p5 , pavg)
+cp_betas = cp_results.get_cp_theta(p2, p4, p5 , pavg)
+
+
+
+
+alphas = [calibration.alpha_model([cp_alphas[i], cp_betas[i]])*180/np.pi for i in range(len(cp_alphas))]
+betas = [calibration.beta_model([cp_alphas[i], cp_betas[i]])*180/np.pi for i in range(len(cp_alphas))]
+
+print(alphas)
+
+plt.scatter(alphas, betas)
+plt.show()
+#fig = plt.figure()
+#ax = fig.add_subplot(111, projection='3d')
+#ax.plot_surface(data_matrix[:,:,0], data_matrix[:,:,1], data_matrix[:,:,2], alpha = 1) #, lw=0.5, rstride=8, cstride=8, alpha=0.3)
+
+#ax.set(xlabel='X position', ylabel='Y position', zlabel='Pressure')
 #plt.savefig("plot1.png")
 # Plot projections of the contours for each dimension.  By choosing offsets
 # that match the appropriate axes limits, the projected contours will sit on

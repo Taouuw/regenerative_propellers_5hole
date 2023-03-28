@@ -45,6 +45,7 @@ class general_regression_model():
     def __call__(self, X:np.ndarray):
         func_vals = [fn(X) for fn in self.functions]
         true_val = np.dot(func_vals, self.coefficients)
+        return true_val
 
     def fit(self, X: np.ndarray, y: np.ndarray):
         matrix = np.empty(shape=(len(X), len(self.functions)))
@@ -90,13 +91,15 @@ calibration_headers = calibration_df.columns
 [cp_alphas, cp_betas, cp_ts, cp_ss, alphas, betas] = [calibration_df[header].to_numpy() for header in calibration_headers]
 alphas = np.array([math.atan(math.tan(math.radians(alphas[i]))/math.cos(math.radians(betas[i]))) for i in range(len(alphas))])
 
+
+
 """How do we find CP_5 and v_inf from the calibration dataset? How do we use/what are CP_t and CP_s?"""
 cp_centers = np.zeros(len(alphas))
 v_inf = np.zeros(len(alphas))
 #creating whole calibration array
 calibration_array = np.hstack([collumn_data.reshape(-1,1) for collumn_data in [cp_alphas, cp_betas, cp_centers, alphas, np.radians(betas), v_inf]])
-print(calibration_array)
-#seperating regression xs and ys
+#print(calibration_array)
+#separating regression xs and ys
 xs = calibration_array[:,:3]    #cp_alpha, cp_beta, cp_center
 ys = calibration_array[:,3:]    #alphas, betas, v_inf
 
