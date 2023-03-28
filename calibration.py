@@ -86,6 +86,21 @@ class general_regression_model():
         return my_regressions_model
 
     @classmethod
+    def two_dim_n(cls, n, shorten=False):
+        def get_basis(power0, power1):
+            def basis_fn(x : np.ndarray):
+                return x[0]**power0 * x[1]**power1
+            return basis_fn
+
+        basis_fns = []
+        for power0 in range(n+1):
+            for power1 in range(n+1 - power0*shorten):
+                basis_fns.append(get_basis(power0, power1))
+
+        my_regressions_model = cls(basis_fns)
+        return my_regressions_model
+
+    @classmethod
     def two_dim_more(cls):
         def f0(x : np.ndarray):
             return 1
@@ -100,7 +115,7 @@ class general_regression_model():
         def f5(x : np.ndarray):
             return x[1] * x[1]
 
-        my_regressions_model = cls([f1,f2,f3])
+        my_regressions_model = cls([f1,f2,f3,f4,f5])
         return my_regressions_model
 
 #Processing calibration data and creating array with it
@@ -122,8 +137,21 @@ xs = calibration_array[:,:3]    #cp_alpha, cp_beta, cp_center
 ys = calibration_array[:,3:]    #alphas, betas, v_inf
 
 #STARTING REGRESSION
-alpha_model = general_regression_model.two_dim_more()
-beta_model = general_regression_model.two_dim_more()
+
+alpha_model = general_regression_model.two_dim_n(4, shorten=True)
+beta_model = general_regression_model.two_dim_n(4, shorten=True)
+
+"""
+def f0(x):
+    return 1
+def f1(x):
+    return math.atan(x[0])
+def f2(x):
+    return math.atan(x[1])
+
+alpha_model = general_regression_model([f0,f1,f2])
+beta_model = general_regression_model([f0, f1, f2])
+"""
 
 alpha_model.fit(xs, ys[:,0])
 beta_model.fit(xs, ys[:,1])
@@ -141,6 +169,17 @@ plt.xlabel("cp_alpha")
 plt.ylabel("alpha")
 plt.legend()
 plt.savefig("plot2.png")
+plt.show()
+
+betas_true = ys[:,1]
+betas_pred = [beta_model(x_vec) for x_vec in xs]
+
+plt.scatter(xs[:,1], betas_true, label="true")
+plt.scatter(xs[:,1], betas_pred, label="predict")
+plt.xlabel("cp_beta")
+plt.ylabel("beta")
+plt.legend()
+plt.savefig("plot3.png")
 plt.show()
 
 """
